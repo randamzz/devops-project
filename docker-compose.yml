@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  app1:
+    build: ./app1
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./app1:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=production
+
+  app2:
+    build: ./app2
+    ports:
+      - "3002:3002"
+    volumes:
+      - ./app2:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=production
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    stdin_open: true
+    tty: true
+    depends_on:
+      - app1
+      - app2
