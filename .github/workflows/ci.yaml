@@ -1,0 +1,32 @@
+name: Continuous Integration (CI)
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build Docker images
+        run: |
+          docker build -t randamzz/devopsa-app1:latest ./app1
+          docker build -t randamzz/devopsa-app2:latest ./app2
+          docker build -t randamzz/devopsa-frontend:latest ./frontend
+
+      - name: Run Tests for App1
+        run: docker run --rm randamzz/devopsa-app1:latest pytest tests/
+
+      - name: Run Tests for App2
+        run: docker run --rm randamzz/devopsa-app2:latest pytest tests/
+
+      - name: Run Tests for Frontend
+        run: docker run --rm randamzz/devopsa-frontend:latest npm test

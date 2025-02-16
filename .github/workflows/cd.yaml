@@ -1,0 +1,43 @@
+name: Continuous Deployment (CD)
+
+on:
+  workflow_run:
+    workflows: ["Continuous Integration (CI)"]
+    types:
+      - completed
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Push Docker images
+        run: |
+          docker push randamzz/devopsa-app1:latest
+          docker push randamzz/devopsa-app2:latest
+          docker push randamzz/devopsa-frontend:latest
+
+      - name: Deploy to Server 
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SERVER_IP: ${{ secrets.SERVER_IP }}
+          USER: ${{ secrets.USER }}
+        run: |
+          echo "$SSH_PRIVATE_KEY" > private_key.pem
+          chmod 600 private_key.pem
+          ssh -o StrictHostKeyChecking=no -i private_key.pem $USER@$SERVER_IP << 'EOF'
+            docker pull randamzz/devopsa-app1:latest
+            docker pull randamzz/devopsa-app2:latest
+            docker pull randamzz/devopsa-frontend:latest
+            docker-compose up -d
+          EOF
